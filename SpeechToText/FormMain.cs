@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using NAudio.Wave;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net;
 using System.IO;
+using System.Net.Http;
 
 namespace SpeechToText
 {
@@ -29,10 +31,80 @@ namespace SpeechToText
 
         private void button1_Click(object sender, EventArgs e)
         {
-            mCurStatus = STATUS.BUNDLE_NO;
-            StartRecording();
-            lbStatus.Text = "작업지시번호를 말해주세요";
+            //mCurStatus = STATUS.BUNDLE_NO;
+            //StartRecording();
+            //lbStatus.Text = "작업지시번호를 말해주세요";
+
+
+            //request();
+            Post();
+
         }
+
+        private void Post()
+        {
+            var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://localhost:3000/api/courses");
+            httpWebRequest.ContentType = "application/json";
+            httpWebRequest.Method = "POST";
+
+            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+            {
+                string json = JsonConvert.SerializeObject(new result("4444444", "99"));
+                streamWriter.Write(json);
+            }
+
+            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+            {
+                var result = streamReader.ReadToEnd();
+                Console.WriteLine(result.ToString());
+            }
+        }
+
+        private void Get()
+        {
+            WebClient client = new WebClient();
+
+            //특정 요청 헤더값을 추가해준다. 
+
+            using (Stream data = client.OpenRead("http://localhost:3000/api/courses/1"))
+            {
+                using (StreamReader reader = new StreamReader(data))
+                {
+                    string s = reader.ReadToEnd();
+
+                    //string jsonString = JsonSerializer.Serialize(weatherForecast);
+
+                    JObject jObject = JObject.Parse(s);
+                    result result = JsonConvert.DeserializeObject<result>(jObject["result"].ToString());
+                    reader.Close();
+                    data.Close();
+                }
+            }
+        }
+
+        private void Put()
+        {
+
+        }
+
+        private void Delete()
+        {
+
+        }
+
+        class result
+        {
+            public string no { get; set; }
+            public string skelp { get; set; }
+
+            public result(string no, string skelp)
+            {
+                this.no = no;
+                this.skelp = skelp;
+            }
+        }
+
 
         private void AddDataToListBox1(string strData)
         {
@@ -131,39 +203,5 @@ namespace SpeechToText
             txtLocation.Text = "";
             txtWarehousingCount.Text = "";
         }
-
-        private void request()
-        {
-            var httpWebRequest = (HttpWebRequest)WebRequest.Create("http://localhost:8080/csharpTest");
-            httpWebRequest.ContentType = "application/json";
-            httpWebRequest.Method = "POST";
-
-            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-            {
-                string json = JsonConvert.SerializeObject(new User("test@test.com", "우종선", "123456789"));
-                streamWriter.Write(json);
-            }
-
-            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-            {
-                var result = streamReader.ReadToEnd();
-                Console.WriteLine(result.ToString());
-            }
-        }
-
-        class User
-        {
-            public string user_email { get; set; }
-            public string user_name { get; set; }
-            public string user_pw { get; set; }
-            public User(string user_email, string user_name, string user_pw)
-            {
-                this.user_email = user_email;
-                this.user_name = user_name;
-                this.user_pw = user_pw;
-            }
-        }
-        
     }
 }
